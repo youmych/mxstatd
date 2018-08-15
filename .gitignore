@@ -151,3 +151,4 @@ local.properties
 
 # End of https://www.gitignore.io/api/c,c++,eclipse,visualstudiocode
 
+bin/
