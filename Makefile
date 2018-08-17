@@ -26,7 +26,8 @@ endif
 
 EXECUTABLE=bin/mxstatd
 
-CXXSOURCES= ./src/main.cpp
+CXXSOURCES= ./src/main.cpp \
+	./src/app_config.cpp
 
 OBJS=$(subst .cpp,.o,$(CXXSOURCES))
 
