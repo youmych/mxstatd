@@ -1,7 +1,27 @@
 #include <iostream>
 #include <exception>
 
+#include <cstring>
+#include <cerrno>
+#include <signal.h>
+#include <execinfo.h>
+#include <unistd.h>
+#include <sys/types.h>
+
 #include <app_config.h>
+
+
+// функция обработки сигналов
+static void signal_handler(int sig)
+{
+    switch(sig) {
+    case SIGUSR1:
+        std::cout << "USR1" << std::endl;
+        break;
+    default:
+        break;
+    }
+}
 
 int main(int argc, char** argv)
 {
@@ -9,11 +29,46 @@ int main(int argc, char** argv)
         if( !AppConfig::ParseArguments(argc, argv) )
             return 0;
 
+        // установим обработчик на SIGUSR1
+        struct sigaction sigact;
+        sigact.sa_flags = 0;
+        sigact.sa_handler = signal_handler;
+        sigemptyset(&sigact.sa_mask);
+        sigaction(SIGUSR1, &sigact, 0);
+
         std::cout << "Input file: " << APP_CONFIG().InputFileName() << std::endl
             << "Input pipe: " << APP_CONFIG().InputPipeName() << std::endl
             << "Input TCP port: " << APP_CONFIG().InputTcpPort() << std::endl
             << "Listen UPD port: " << APP_CONFIG().OutputUdpPort() << std::endl
             << "Output file: " << APP_CONFIG().OutputFileName() << std::endl;
+
+        // блокируем сигналы, которые будем ждать для завершения программы
+        sigset_t sigset;
+        sigemptyset(&sigset);
+        sigaddset(&sigset, SIGTERM);
+        sigaddset(&sigset, SIGINT);
+        sigaddset(&sigset, SIGQUIT);
+        sigprocmask(SIG_BLOCK, &sigset, nullptr);
+
+        std::cout << "My pid is: " << getpid() << std::endl;
+
+        // ожидаем поступление сигнала
+        for(;;) {
+            siginfo_t siginfo;
+            int rc = sigwaitinfo(&sigset, &siginfo);
+            if( rc < 0 ) {
+                if( errno == EINTR ) // сигнал уже обработан. Ложное срабатывание
+                    continue;
+                std::cout << "sigwaitinfo(): " << strerror(errno) << std::endl;
+                break;
+            }
+            std::cout << "Received signal " << strsignal(siginfo.si_signo)
+                << " (" << siginfo.si_signo  << ")."
+                << std::endl;
+            break;
+        }
+
+        // завершение работы потоков
     }
     catch(std::exception& e) {
         std::cerr << "Caught exception: " << e.what() << std::endl;
