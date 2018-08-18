@@ -12,6 +12,7 @@
 #include <app_config.h>
 #include <thread_guard.h>
 #include <line_parser.h>
+#include <epoll_service.h>
 
 
 // функция обработки сигналов
@@ -47,6 +48,8 @@ int main(int argc, char** argv)
 
         std::cout << "My pid is: " << getpid() << std::endl;
 
+        linux::io::EpollService eps;
+
         // блокируем сигналы, которые будем ждать для завершения программы
         sigset_t sigset;
         sigemptyset(&sigset);
@@ -55,26 +58,37 @@ int main(int argc, char** argv)
         sigaddset(&sigset, SIGQUIT);
         sigprocmask(SIG_BLOCK, &sigset, nullptr);
 
-        std::thread fileReader = std::thread([]{
-            std::cout << "Input file: " << APP_CONFIG().InputFileName() << std::endl;
-            std::ifstream file(APP_CONFIG().InputFileName().c_str());
-
-            std::string s;
-            while( std::getline(file, s) ) {
-
-                auto ev = LineParser::Parse(s);
-                if( !ev ) {
-                    std::cout << s << "\n";
-                    continue;
-                }
-                if( ev.value().Type == Data::Log::EventType::UNKNOWN ) {
-                    std::cout << s << "\n";
-                    continue;
-                }
-                // work with event
+        std::thread epsThread = std::thread([&](){
+            try {
+                eps.Run();
+            }
+            catch(std::exception& e) {
+                std::cout << "Exception in ept thread: " << e.what() << std::endl;
+                eps.Stop();
             }
         });
-        ThreadGuard fileReaderGuard(fileReader);
+        ThreadGuard epsThreadGuard(epsThread);
+
+        // std::thread fileReader = std::thread([]{
+        //     std::cout << "Input file: " << APP_CONFIG().InputFileName() << std::endl;
+        //     std::ifstream file(APP_CONFIG().InputFileName().c_str());
+
+        //     std::string s;
+        //     while( std::getline(file, s) ) {
+
+        //         auto ev = LineParser::Parse(s);
+        //         if( !ev ) {
+        //             std::cout << s << "\n";
+        //             continue;
+        //         }
+        //         if( ev.value().Type == Data::Log::EventType::UNKNOWN ) {
+        //             std::cout << s << "\n";
+        //             continue;
+        //         }
+        //         // work with event
+        //     }
+        // });
+        // ThreadGuard fileReaderGuard(fileReader);
 
         // ожидаем поступления сигнала
         for(;;) {
@@ -92,6 +106,8 @@ int main(int argc, char** argv)
             break;
         }
 
+        // отправка сигналов о необходимости остановки
+        eps.Stop();
         // завершение работы потоков
     }
     catch(std::exception& e) {

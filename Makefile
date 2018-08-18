@@ -27,7 +27,9 @@ endif
 EXECUTABLE=bin/mxstatd
 
 CXXSOURCES= ./src/main.cpp \
-	./src/app_config.cpp
+	./src/app_config.cpp \
+	./src/epoll_actor_proxy.cpp \
+	./src/epoll_service.cpp
 
 OBJS=$(subst .cpp,.o,$(CXXSOURCES))
 
