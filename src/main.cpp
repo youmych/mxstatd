@@ -1,5 +1,6 @@
 #include <iostream>
 #include <exception>
+#include <fstream>
 
 #include <cstring>
 #include <cerrno>
@@ -9,6 +10,8 @@
 #include <sys/types.h>
 
 #include <app_config.h>
+#include <thread_guard.h>
+#include <line_parser.h>
 
 
 // функция обработки сигналов
@@ -42,6 +45,8 @@ int main(int argc, char** argv)
             << "Listen UPD port: " << APP_CONFIG().OutputUdpPort() << std::endl
             << "Output file: " << APP_CONFIG().OutputFileName() << std::endl;
 
+        std::cout << "My pid is: " << getpid() << std::endl;
+
         // блокируем сигналы, которые будем ждать для завершения программы
         sigset_t sigset;
         sigemptyset(&sigset);
@@ -50,9 +55,28 @@ int main(int argc, char** argv)
         sigaddset(&sigset, SIGQUIT);
         sigprocmask(SIG_BLOCK, &sigset, nullptr);
 
-        std::cout << "My pid is: " << getpid() << std::endl;
+        std::thread fileReader = std::thread([]{
+            std::cout << "Input file: " << APP_CONFIG().InputFileName() << std::endl;
+            std::ifstream file(APP_CONFIG().InputFileName().c_str());
 
-        // ожидаем поступление сигнала
+            std::string s;
+            while( std::getline(file, s) ) {
+
+                auto ev = LineParser::Parse(s);
+                if( !ev ) {
+                    std::cout << s << "\n";
+                    continue;
+                }
+                if( ev.value().Type == Data::Log::EventType::UNKNOWN ) {
+                    std::cout << s << "\n";
+                    continue;
+                }
+                // work with event
+            }
+        });
+        ThreadGuard fileReaderGuard(fileReader);
+
+        // ожидаем поступления сигнала
         for(;;) {
             siginfo_t siginfo;
             int rc = sigwaitinfo(&sigset, &siginfo);
