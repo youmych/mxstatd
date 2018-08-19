@@ -34,7 +34,7 @@ class host_error : public std::system_error
 {
 public:
     host_error(int h_error_, const char* hostname)
-        : std::system_error(h_error_, linux::net::HostentErrorCategory(), hostname)
+        : std::system_error(h_error_, linux::netdb::HostentErrorCategory(), hostname)
     {}
 };
 
@@ -43,7 +43,7 @@ class unknown_service : public std::system_error
 {
 public:
     unknown_service(const char* serviceName)
-        : std::system_error(1, linux::net::ServentErrorCategory(), serviceName)
+        : std::system_error(1, linux::netdb::ServentErrorCategory(), serviceName)
     {}
 };
 

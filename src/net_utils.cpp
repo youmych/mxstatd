@@ -148,7 +148,7 @@ int udp4_server(const char* hostName, const char* serviceName)
 
 //------------------------------------------------------------------------------
 namespace linux {
-namespace net {
+namespace netdb {
 
 //------------------------------------------------------------------------------
 const char* HostentErrorCategory::name() const noexcept
@@ -194,15 +194,15 @@ std::string ServentErrorCategory::message(int ev) const
 const HostentErrorCategory hostent_error_category {};
 const ServentErrorCategory servent_error_category {};
 
-} // namespace net
+} // namespace netdb
 } // namespace linux
 
-std::error_code make_error_code(linux::net::HostentError e)
+std::error_code make_error_code(linux::netdb::HostentError e)
 {
-  return {static_cast<int>(e), linux::net::hostent_error_category};
+  return {static_cast<int>(e), linux::netdb::hostent_error_category};
 }
 
-std::error_code make_error_code(linux::net::ServentError e)
+std::error_code make_error_code(linux::netdb::ServentError e)
 {
-  return {static_cast<int>(e), linux::net::servent_error_category};
+  return {static_cast<int>(e), linux::netdb::servent_error_category};
 }

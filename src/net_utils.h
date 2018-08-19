@@ -4,7 +4,7 @@
 #include <system_error>
 
 namespace linux {
-namespace net {
+namespace netdb {
 
 enum class HostentError {
     host_not_found = HOST_NOT_FOUND,
@@ -29,20 +29,20 @@ struct ServentErrorCategory : std::error_category
   std::string message(int ev) const override;
 };
 
-} // namespace net
+} // namespace netdb
 } // namespace linux
 
 namespace std
 {
   template <>
-    struct is_error_code_enum<linux::net::HostentError> : true_type {};
+    struct is_error_code_enum<linux::netdb::HostentError> : true_type {};
 
   template <>
-    struct is_error_code_enum<linux::net::ServentError> : true_type {};
+    struct is_error_code_enum<linux::netdb::ServentError> : true_type {};
 } // nmaespace std
 
-std::error_code make_error_code(linux::net::HostentError);
-std::error_code make_error_code(linux::net::ServentError);
+std::error_code make_error_code(linux::netdb::HostentError);
+std::error_code make_error_code(linux::netdb::ServentError);
 
 bool isvalidsock(int sockfd);
 
