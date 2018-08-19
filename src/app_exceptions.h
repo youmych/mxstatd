@@ -30,23 +30,21 @@ public:
 };
 
 ///
-class unknown_host : public std::system_error
+class host_error : public std::system_error
 {
 public:
-    unknown_host(int h_error_, const char* hostname)
+    host_error(int h_error_, const char* hostname)
         : std::system_error(h_error_, linux::net::HostentErrorCategory(), hostname)
     {}
 };
 
 ///
-class unknown_service : public std::exception
+class unknown_service : public std::system_error
 {
 public:
-    unknown_service() {}
-    const char* what() const noexcept override {
-        return "unknown host";
-    }
+    unknown_service(const char* serviceName)
+        : std::system_error(1, linux::net::ServentErrorCategory(), serviceName)
+    {}
 };
-
 
 } // namespace mxstatd

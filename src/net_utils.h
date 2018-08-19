@@ -13,7 +13,17 @@ enum class HostentError {
     try_again = TRY_AGAIN
 };
 
+enum class ServentError {
+    service_not_found = 1
+};
+
 struct HostentErrorCategory : std::error_category
+{
+  const char* name() const noexcept override;
+  std::string message(int ev) const override;
+};
+
+struct ServentErrorCategory : std::error_category
 {
   const char* name() const noexcept override;
   std::string message(int ev) const override;
@@ -26,9 +36,13 @@ namespace std
 {
   template <>
     struct is_error_code_enum<linux::net::HostentError> : true_type {};
+
+  template <>
+    struct is_error_code_enum<linux::net::ServentError> : true_type {};
 } // nmaespace std
 
 std::error_code make_error_code(linux::net::HostentError);
+std::error_code make_error_code(linux::net::ServentError);
 
 bool isvalidsock(int sockfd);
 
