@@ -29,7 +29,8 @@ EXECUTABLE=bin/mxstatd
 CXXSOURCES= ./src/main.cpp \
 	./src/app_config.cpp \
 	./src/epoll_actor_proxy.cpp \
-	./src/epoll_service.cpp
+	./src/epoll_service.cpp \
+	./src/net_utils.cpp
 
 OBJS=$(subst .cpp,.o,$(CXXSOURCES))
 
