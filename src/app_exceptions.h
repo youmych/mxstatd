@@ -27,4 +27,25 @@ public:
     }
 };
 
+///
+class unknown_host : public std::exception
+{
+public:
+    unknown_host() {}
+    const char* what() const noexcept override {
+        return "unknown host";
+    }
+};
+
+///
+class unknown_service : public std::exception
+{
+public:
+    unknown_service() {}
+    const char* what() const noexcept override {
+        return "unknown host";
+    }
+};
+
+
 } // namespace mxstatd
