@@ -96,6 +96,8 @@ void EpollService::HandleEvent(struct epoll_event& ev)
 
     if( found->second->NativeHandler() == StopEventReadFd() )
         throw mxstatd::epoll_service_terminate();
+
+
 }
 
 //-----------------------------------------------------------------------------
