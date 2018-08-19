@@ -43,7 +43,6 @@ public:
 
 private:
     void Close();
-    void HandleEvents(struct epoll_event* begin, struct epoll_event* end);
     void HandleEvent(struct epoll_event& ev);
     void StopAll();
 

@@ -12,8 +12,12 @@ class EpollActorProxy
 {
     using actor_ptr_t = std::shared_ptr<EpollActor>;
 
+    ///
     EpollService& m_Service;
+    /// Класс просто хранит это значение. Оно будет исопльзоваться для
+    /// открепления дескриптора из набора epoll
     int m_Fd = -1;
+    /// Указатель на настоящую реализацию
     actor_ptr_t m_Actor;
 
     friend class EpollService;

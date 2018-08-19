@@ -1,9 +1,11 @@
 #include <epoll_service.h>
 #include <epoll_actor_proxy.h>
+#include <epoll_actor.h>
 #include <app_exceptions.h>
 
 #include <iterator>
 #include <iostream>
+#include <algorithm>
 #include <cstring>
 #include <cassert>
 
@@ -53,7 +55,9 @@ void EpollService::Run()
             }
             throw mxstatd::system_error(errno, "epoll_wait()");
         }
-        HandleEvents(events, events + nfds);
+        std::for_each(events, events + nfds, [this](auto ev){
+            HandleEvent(ev);
+        });
     }
 }
 
@@ -78,14 +82,6 @@ void EpollService::Close()
     if( m_StopEventFds[1] >= 0 ) {
         close(m_StopEventFds[1]);
         m_StopEventFds[1] = -1;
-    }
-}
-
-//-----------------------------------------------------------------------------
-void EpollService::HandleEvents(struct epoll_event* begin, struct epoll_event* end)
-{
-    for(auto it = begin; it != end; ++it) {
-        HandleEvent(*it);
     }
 }
 
@@ -118,14 +114,16 @@ void EpollService::Unregister(actor_proxy_ptr_t actor)
 //-----------------------------------------------------------------------------
 void EpollService::Register(int fd, actor_ptr_t actor)
 {
-    auto proxy = std::make_shared<EpollActorProxy>(*this, fd, actor);
+    auto proxy = std::make_shared<EpollActorProxy>(*this, fd, std::move(actor));
     struct epoll_event ev;
     ev.events = EPOLLIN;
+    if( actor->EventTriggered() )
+        ev.events |= (EPOLLOUT | EPOLLET);
     ev.data.ptr = proxy.get();
     if (epoll_ctl(m_PollFd, EPOLL_CTL_ADD, fd, &ev) == -1) {
         throw mxstatd::system_error(errno, "epoll_ctl(add actor)");
     }
-    m_Actors.emplace(proxy.get(), proxy);
+    m_Actors.emplace(proxy.get(), std::move(proxy));
 }
 
 //-----------------------------------------------------------------------------
