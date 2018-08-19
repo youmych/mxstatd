@@ -5,6 +5,8 @@
 #include <system_error> // system_error, system_category
 #include <string> // to_string
 
+#include <net_utils.h>
+
 namespace mxstatd {
 
 // то же самое, что и std::system_error, но с более удобным конструктором
@@ -28,13 +30,12 @@ public:
 };
 
 ///
-class unknown_host : public std::exception
+class unknown_host : public std::system_error
 {
 public:
-    unknown_host() {}
-    const char* what() const noexcept override {
-        return "unknown host";
-    }
+    unknown_host(int h_error_, const char* hostname)
+        : std::system_error(h_error_, linux::net::HostentErrorCategory(), hostname)
+    {}
 };
 
 ///

@@ -1,3 +1,5 @@
+#include <net_utils.h>
+
 #include <iostream>
 #include <cstring>
 
@@ -62,7 +64,7 @@ void set_address(const char* hostName, const char* serviceName,
             struct hostent *hp = gethostbyname(hostName);
             if( nullptr == hp ) {
                 std::cout << "Unknown host: " << hostName << std::endl;
-                throw mxstatd::unknown_host();
+                throw mxstatd::unknown_host(h_errno, hostName);
             }
             sap->sin_addr = *(struct in_addr*)hp->h_addr;
         }
@@ -142,4 +144,38 @@ int udp4_server(const char* hostName, const char* serviceName)
 
     sc.UnOwn();
     return s;
+}
+
+//------------------------------------------------------------------------------
+namespace linux {
+namespace net {
+
+const char* HostentErrorCategory::name() const noexcept
+{
+  return "netdb";
+}
+
+std::string HostentErrorCategory::message(int ev) const
+{
+  switch (static_cast<HostentError>(ev))
+  {
+  case HostentError::host_not_found:
+  case HostentError::no_data:
+  case HostentError::no_recovery:
+  case HostentError::try_again:
+    return hstrerror(ev);
+
+  default:
+    return "(unrecognized error)";
+  }
+}
+
+const HostentErrorCategory hostent_errorc_ategory {};
+
+} // namespace net
+} // namespace linux
+
+std::error_code make_error_code(linux::net::HostentError e)
+{
+  return {static_cast<int>(e), linux::net::hostent_errorc_ategory};
 }

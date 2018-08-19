@@ -1,5 +1,35 @@
 #pragma once
 
+#include <netdb.h>
+#include <system_error>
+
+namespace linux {
+namespace net {
+
+enum class HostentError {
+    host_not_found = HOST_NOT_FOUND,
+    no_data = NO_DATA,
+    no_recovery = NO_RECOVERY,
+    try_again = TRY_AGAIN
+};
+
+struct HostentErrorCategory : std::error_category
+{
+  const char* name() const noexcept override;
+  std::string message(int ev) const override;
+};
+
+} // namespace net
+} // namespace linux
+
+namespace std
+{
+  template <>
+    struct is_error_code_enum<linux::net::HostentError> : true_type {};
+} // nmaespace std
+
+std::error_code make_error_code(linux::net::HostentError);
+
 bool isvalidsock(int sockfd);
 
 void set_nonblocking(int fd);
@@ -12,3 +42,4 @@ int tcp_server_socket(struct sockaddr* sockaddr, int maxListeners);
 int tcp4_server(const char* hostName, const char* serviceName);
 
 int udp4_server(const char* hostName, const char* serviceName);
+
