@@ -166,7 +166,9 @@ void EpollService::StopAll()
 {
     for( auto [unused, actor]: m_Actors ) {
         try {
-            actor->Stop();
+            // assert(actor.get() != nullptr);
+            if(actor.get() != nullptr)
+                actor->Stop();
             (void)(unused);
         }
         catch(std::exception&) {}
