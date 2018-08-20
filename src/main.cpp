@@ -14,6 +14,7 @@
 #include <line_parser.h>
 #include <epoll_service.h>
 
+#include <actor_tcp_listener.h>
 
 // функция обработки сигналов
 static void signal_handler(int sig)
@@ -57,6 +58,8 @@ int main(int argc, char** argv)
         sigaddset(&sigset, SIGINT);
         sigaddset(&sigset, SIGQUIT);
         sigprocmask(SIG_BLOCK, &sigset, nullptr);
+
+        eps.CreateActor<mxstatd::ActorTcpListener>(APP_CONFIG().InputTcpPort());
 
         std::thread epsThread = std::thread([&](){
             try {
