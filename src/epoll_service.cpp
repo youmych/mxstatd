@@ -65,7 +65,9 @@ void EpollService::Run()
 void EpollService::Stop()
 {
     size_t n = 1;
-    write(StopEventWriteFd(), &n, sizeof n);
+    if( write(StopEventWriteFd(), &n, sizeof n) < 0 ) {
+        // fo nothing
+    }
 }
 
 //-----------------------------------------------------------------------------
