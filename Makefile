@@ -33,6 +33,7 @@ CXXSOURCES= ./src/main.cpp \
 	./src/net_utils.cpp \
 	./src/actor_tcp_listener.cpp \
 	./src/actor_tcp_reader.cpp \
+	./src/actor_named_pipe_reader.cpp
 
 OBJS=$(subst .cpp,.o,$(CXXSOURCES))
 

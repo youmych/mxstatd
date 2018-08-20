@@ -42,6 +42,7 @@
         "fstream": "cpp",
         "functional": "cpp",
         "sstream": "cpp",
-        "optional": "cpp"
+        "optional": "cpp",
+        "cerrno": "cpp"
     }
 }
