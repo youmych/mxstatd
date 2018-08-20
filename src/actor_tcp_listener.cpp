@@ -17,6 +17,13 @@ ActorTcpListener::ActorTcpListener(linux::io::EpollService& service, int port)
 
 }
 
+ActorTcpListener::~ActorTcpListener()
+{
+    if( isvalidsock( NativeHandler() ) ) {
+        shutdown( NativeHandler(), SHUT_RDWR );
+    }
+}
+
 void ActorTcpListener::ReadyRead()
 {
     struct sockaddr_in peerAddr;
