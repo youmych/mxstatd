@@ -15,6 +15,7 @@
 #include <epoll_service.h>
 
 #include <actor_tcp_listener.h>
+#include <actor_named_pipe_reader.h>
 
 // функция обработки сигналов
 static void signal_handler(int sig)
@@ -60,6 +61,7 @@ int main(int argc, char** argv)
         sigprocmask(SIG_BLOCK, &sigset, nullptr);
 
         eps.CreateActor<mxstatd::ActorTcpListener>(APP_CONFIG().InputTcpPort());
+        eps.CreateActor<mxstatd::ActorNamedPipeReader>("/tmp/mxstatd.fifo");
 
         std::thread epsThread = std::thread([&](){
             try {
@@ -111,6 +113,7 @@ int main(int argc, char** argv)
 
         // отправка сигналов о необходимости остановки
         eps.Stop();
+        std::cout << "eps.Stop()" << std::endl;
         // завершение работы потоков
     }
     catch(std::exception& e) {
