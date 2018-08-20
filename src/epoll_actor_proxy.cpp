@@ -1,4 +1,5 @@
 #include <epoll_actor_proxy.h>
+#include <epoll_actor.h>
 #include <epoll_service.h>
 
 #include <sys/epoll.h>
@@ -20,7 +21,18 @@ EpollActorProxy::~EpollActorProxy()
 {
 
 }
-
+//-----------------------------------------------------------------------------
+void EpollActorProxy::ReadyRead(int /*events*/)
+{
+    if( m_Actor )
+        m_Actor->ReadyRead();
+}
+//-----------------------------------------------------------------------------
+void EpollActorProxy::ReadyWrite(int /*events*/)
+{
+    if( m_Actor )
+        m_Actor->ReadyWrite();
+}
 //-----------------------------------------------------------------------------
 void EpollActorProxy::Stop()
 {

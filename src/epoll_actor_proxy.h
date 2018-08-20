@@ -30,6 +30,9 @@ public:
 
     void Stop();
     int NativeHandler() const { return m_Fd; }
+
+    void ReadyRead(int events);
+    void ReadyWrite(int events);
 };
 
 } // namespace io

@@ -96,10 +96,27 @@ void EpollService::HandleEvent(struct epoll_event& ev)
         return;
     }
 
-    if( found->second->NativeHandler() == StopEventReadFd() )
+    auto pactor = found->second;
+    if( pactor->NativeHandler() == StopEventReadFd() )
         throw mxstatd::epoll_service_terminate();
 
+    //ev.events
+    try {
+        if(ev.events & (EPOLLOUT | EPOLLERR | EPOLLHUP) ) {
+            pactor->ReadyWrite(ev.events);
+        }
 
+        if(ev.events & (EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
+            pactor->ReadyRead(ev.events);
+        }
+    }
+    catch(mxstatd::epoll_service_terminate& ) {
+        throw;
+    }
+    catch(std::exception& e) {
+        std::cout << e.what() << std::endl;
+        pactor->Stop();
+    }
 }
 
 //-----------------------------------------------------------------------------
