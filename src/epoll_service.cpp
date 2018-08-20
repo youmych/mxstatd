@@ -66,7 +66,7 @@ void EpollService::Stop()
 {
     size_t n = 1;
     if( write(StopEventWriteFd(), &n, sizeof n) < 0 ) {
-        // fo nothing
+        // do nothing
     }
 }
 
@@ -133,8 +133,12 @@ void EpollService::Unregister(actor_proxy_ptr_t actor)
 }
 
 //-----------------------------------------------------------------------------
-void EpollService::Register(int fd, actor_ptr_t actor)
+void EpollService::Register(actor_ptr_t actor)
 {
+    if( !actor )
+        return;
+
+    int fd = actor->NativeHandler();
     auto proxy = std::make_shared<EpollActorProxy>(*this, fd, std::move(actor));
     struct epoll_event ev;
     ev.events = EPOLLIN;

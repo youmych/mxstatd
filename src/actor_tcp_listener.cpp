@@ -26,7 +26,7 @@ void ActorTcpListener::ReadyRead()
     SocketCloser sc(clientfd);
     set_nonblocking(clientfd);
 
-    Service().Register( clientfd, std::make_shared<ActorTcpReader>(Service(), clientfd) );
+    Service().Register( std::make_shared<ActorTcpReader>(Service(), clientfd) );
     sc.UnOwn();
 }
 

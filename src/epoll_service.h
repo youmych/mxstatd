@@ -39,7 +39,7 @@ public:
     void Run();
     void Stop();
     void Unregister(actor_proxy_ptr_t actor);
-    void Register(int fd, actor_ptr_t actor);
+    void Register(actor_ptr_t actor);
 
 private:
     void Close();
