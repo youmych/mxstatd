@@ -17,6 +17,9 @@ public:
     system_error(int ec, const char* what_arg)
         : std::system_error(ec, std::system_category(), what_arg)
     {}
+    system_error(int ec, const std::string& what_arg)
+        : std::system_error(ec, std::system_category(), what_arg)
+    {}
 };
 
 /// Класс-маркер для остановки EpollService::Run()
