@@ -44,6 +44,12 @@ public:
     void Unregister(actor_proxy_ptr_t actor);
     void Register(actor_ptr_t actor);
 
+    /// Метод для создания агентов
+    template<class T, class... Args>
+    void CreateActor(Args&&... args) {
+        Register( std::make_shared<T>(*this, std::forward<Args>(args)...) );
+    }
+
 private:
     void Close();
     void HandleEvent(struct epoll_event& ev);
