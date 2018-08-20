@@ -141,14 +141,15 @@ void EpollService::Unregister(actor_proxy_ptr_t actor)
 //-----------------------------------------------------------------------------
 void EpollService::Register(actor_ptr_t actor)
 {
-    if( !actor )
+    if( !actor.get() )
         return;
 
     int fd = actor->NativeHandler();
+    bool enableET = actor->EventTriggered();
     auto proxy = std::make_shared<EpollActorProxy>(*this, fd, std::move(actor));
     struct epoll_event ev;
     ev.events = EPOLLIN;
-    if( actor->EventTriggered() )
+    if( enableET )
         ev.events |= (EPOLLOUT | EPOLLET);
     ev.data.ptr = proxy.get();
 
