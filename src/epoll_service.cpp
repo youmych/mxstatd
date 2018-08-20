@@ -90,6 +90,7 @@ void EpollService::Close()
 //-----------------------------------------------------------------------------
 void EpollService::HandleEvent(struct epoll_event& ev)
 {
+    std::unique_lock<std::mutex> lock(m_MapMutex);
     auto found = m_Actors.find(static_cast<EpollActorProxy*>(ev.data.ptr));
     assert(found != m_Actors.end());
     if( found == m_Actors.end() ) {
@@ -97,6 +98,9 @@ void EpollService::HandleEvent(struct epoll_event& ev)
     }
 
     auto pactor = found->second;
+
+    lock.unlock();
+
     if( pactor->NativeHandler() == StopEventReadFd() )
         throw mxstatd::epoll_service_terminate();
 
@@ -125,6 +129,8 @@ void EpollService::Unregister(actor_proxy_ptr_t actor)
     if( !actor )
         return;
 
+    std::lock_guard<std::mutex> lock(m_MapMutex);
+
     if( 0 != epoll_ctl(m_PollFd, EPOLL_CTL_DEL, actor->NativeHandler(), nullptr) ) {
         std::cerr << "Warning: can't unregister epoll handler "
             << actor->NativeHandler() << ": " << strerror(errno) << std::endl;
@@ -145,6 +151,9 @@ void EpollService::Register(actor_ptr_t actor)
     if( actor->EventTriggered() )
         ev.events |= (EPOLLOUT | EPOLLET);
     ev.data.ptr = proxy.get();
+
+    std::lock_guard<std::mutex> lock(m_MapMutex);
+
     if (epoll_ctl(m_PollFd, EPOLL_CTL_ADD, fd, &ev) == -1) {
         throw mxstatd::system_error(errno, "epoll_ctl(add actor)");
     }

@@ -1,6 +1,7 @@
 #pragma once
 #include <unordered_map>
 #include <memory>
+#include <mutex>
 
 struct epoll_event;
 
@@ -27,6 +28,8 @@ class EpollService
     int m_StopEventFds[2] = { -1, -1 };
     /// все активные агенты
     std::unordered_map<EpollActorProxy*, actor_proxy_ptr_t> m_Actors;
+    /// мьютекс для защиты хранилища агентов
+    std::mutex m_MapMutex;
 
 public:
     explicit EpollService();
