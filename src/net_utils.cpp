@@ -22,20 +22,12 @@ bool isvalidsock(int sockfd)
 }
 
 //------------------------------------------------------------------------------
-class SocketCloser {
-    int& m_Sockfd;
-    bool is_Own = true;
-public:
-    SocketCloser(int& sockfd) : m_Sockfd(sockfd) {}
-    ~SocketCloser() {
-        if( is_Own && isvalidsock(m_Sockfd) ) {
-            close(m_Sockfd);
-            m_Sockfd = -1;
-        }
+SocketCloser::~SocketCloser() {
+    if( is_Own && isvalidsock(m_Sockfd) ) {
+        close(m_Sockfd);
+        m_Sockfd = -1;
     }
-
-    void UnOwn() { is_Own = false; }
-};
+}
 
 //------------------------------------------------------------------------------
 void set_nonblocking(int sockfd)
@@ -86,7 +78,7 @@ void set_address(const char* hostName, const char* serviceName,
 }
 
 //------------------------------------------------------------------------------
-int tcp_server_socket(struct sockaddr* sockaddr, int nlisten)
+int tcp_server_socket(struct sockaddr* sockaddr)
 {
     int on = 1;
 
@@ -111,10 +103,6 @@ int tcp_server_socket(struct sockaddr* sockaddr, int nlisten)
         throw mxstatd::system_error(errno, "tcp_server.bind");
     }
 
-    if( 0 != listen(s, nlisten) ) {
-        throw mxstatd::system_error(errno, "tcp_server.listen");
-    }
-
     sc.UnOwn();
     return s;
 }
@@ -125,7 +113,20 @@ int tcp4_server(const char* hostName, const char* serviceName)
     struct sockaddr_in local;
 
     set_address(hostName, serviceName, &local, "tcp");
-    return tcp_server_socket((struct sockaddr*)&local, NLISTEN);
+    int s = tcp_server_socket((struct sockaddr*)&local);
+    set_nonblocking(s);
+    if( 0 != listen(s, NLISTEN) ) {
+        throw mxstatd::system_error(errno, "tcp4_server.listen");
+    }
+    return s;
+}
+
+//------------------------------------------------------------------------------
+int tcp4_server(const char* hostName, int port)
+{
+    char portName[10];
+    snprintf(portName, sizeof portName, "%d", port);
+    return tcp4_server(hostName, portName);
 }
 
 //------------------------------------------------------------------------------
@@ -144,6 +145,13 @@ int udp4_server(const char* hostName, const char* serviceName)
 
     sc.UnOwn();
     return s;
+}
+//------------------------------------------------------------------------------
+int udp4_server(const char* hostName, int port)
+{
+    char portName[10];
+    snprintf(portName, sizeof portName, "%d", port);
+    return udp4_server(hostName, portName);
 }
 
 //------------------------------------------------------------------------------
