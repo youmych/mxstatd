@@ -40,7 +40,7 @@ void ActorTcpReader::ReadyRead()
 
         // std::copy(buf, buf+rc, std::ostream_iterator<char>(std::cout));
         size_t summ = std::accumulate(buf, buf+rc, size_t(0));
-        std::cout << "summ of " << rc << " items = " << summ << std::endl;
+        std::cout << "s:summ of " << rc << " items = " << summ << std::endl;
     }
 }
 

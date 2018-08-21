@@ -30,7 +30,7 @@ create_and_open_named_pipe(const std::string& pipeName)
 //-----------------------------------------------------------------------------
 ActorNamedPipeReader::ActorNamedPipeReader(linux::io::EpollService& service,
     const std::string& pipeName)
-    : linux::io::EpollActor(service, create_and_open_named_pipe(pipeName))
+    : linux::io::EpollActor(service, create_and_open_named_pipe(pipeName), true)
     , m_PipeName(pipeName)
 {
 
@@ -58,7 +58,7 @@ void ActorNamedPipeReader::ReadyRead()
 
         // std::copy(buf, buf+rc, std::ostream_iterator<char>(std::cout));
         size_t summ = std::accumulate(buf, buf+rc, size_t(0));
-        std::cout << "summ of " << rc << " items = " << summ << std::endl;
+        std::cout << "p:summ of " << rc << " items = " << summ << std::endl;
     }
 }
 //-----------------------------------------------------------------------------
