@@ -1,6 +1,7 @@
 #include <iostream>
 #include <exception>
 #include <fstream>
+#include <future>
 
 #include <cstring>
 #include <cerrno>
@@ -52,6 +53,37 @@ int main(int argc, char** argv)
 
         linux::io::EpollService eps;
 
+        // цикл для работы с асинхронными событиями
+        auto epsCycle = [&](){
+            try {
+                eps.Run();
+            }
+            catch(std::exception& e) {
+                std::cout << "Exception in ept thread: " << e.what() << std::endl;
+                eps.Stop();
+            }
+        };
+        // цикл чтения из файла
+        auto fileCycle = [&](auto path) {
+            std::cout << "Input file: " << path << std::endl;
+            std::ifstream file(path.c_str());
+
+            std::string s;
+            while( std::getline(file, s) ) {
+
+                auto ev = LineParser::Parse(s);
+                if( !ev ) {
+                    std::cout << s << "\n";
+                    continue;
+                }
+                if( ev.value().Type == Data::Log::EventType::UNKNOWN ) {
+                    std::cout << s << "\n";
+                    continue;
+                }
+                // work with event
+            }
+        };
+
         // блокируем сигналы, которые будем ждать для завершения программы
         sigset_t sigset;
         sigemptyset(&sigset);
@@ -60,40 +92,17 @@ int main(int argc, char** argv)
         sigaddset(&sigset, SIGQUIT);
         sigprocmask(SIG_BLOCK, &sigset, nullptr);
 
-        eps.CreateActor<mxstatd::ActorTcpListener>(APP_CONFIG().InputTcpPort());
-        eps.CreateActor<mxstatd::ActorNamedPipeReader>("/tmp/mxstatd.fifo");
+        if( APP_CONFIG().InputTcpPort() != 0 )
+            eps.CreateActor<mxstatd::ActorTcpListener>(APP_CONFIG().InputTcpPort());
+        if( !APP_CONFIG().InputPipeName().empty() )
+            eps.CreateActor<mxstatd::ActorNamedPipeReader>(APP_CONFIG().InputPipeName());
 
-        std::thread epsThread = std::thread([&](){
-            try {
-                eps.Run();
-            }
-            catch(std::exception& e) {
-                std::cout << "Exception in ept thread: " << e.what() << std::endl;
-                eps.Stop();
-            }
-        });
-        ThreadGuard epsThreadGuard(epsThread);
 
-        // std::thread fileReader = std::thread([]{
-        //     std::cout << "Input file: " << APP_CONFIG().InputFileName() << std::endl;
-        //     std::ifstream file(APP_CONFIG().InputFileName().c_str());
-
-        //     std::string s;
-        //     while( std::getline(file, s) ) {
-
-        //         auto ev = LineParser::Parse(s);
-        //         if( !ev ) {
-        //             std::cout << s << "\n";
-        //             continue;
-        //         }
-        //         if( ev.value().Type == Data::Log::EventType::UNKNOWN ) {
-        //             std::cout << s << "\n";
-        //             continue;
-        //         }
-        //         // work with event
-        //     }
-        // });
-        // ThreadGuard fileReaderGuard(fileReader);
+        std::future<void> epsFuture = std::async(std::launch::async, std::move(epsCycle));
+        std::future<void> fileFuture;
+        if( !APP_CONFIG().InputFileName().empty() ) {
+            fileFuture = std::async(std::launch::async, fileCycle, APP_CONFIG().InputFileName());
+        }
 
         // ожидаем поступления сигнала
         for(;;) {
@@ -115,6 +124,10 @@ int main(int argc, char** argv)
         eps.Stop();
         std::cout << "eps.Stop()" << std::endl;
         // завершение работы потоков
+        if( fileFuture.valid() ) {
+            fileFuture.wait();
+        }
+        epsFuture.wait();
     }
     catch(std::exception& e) {
         std::cerr << "Caught exception: " << e.what() << std::endl;
