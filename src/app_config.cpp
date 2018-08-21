@@ -34,7 +34,7 @@ bool AppConfig::ParseArguments(int argc, char** argv)
 
         case 'f': APP_CONFIG().m_InputFile = (optarg ? optarg : ""); break;
         case 's': APP_CONFIG().m_InputPort = std::atoi(optarg); break;
-        case 'p': APP_CONFIG().m_UdpPort = std::atoi(optarg);   break;
+        case 'p': APP_CONFIG().m_InputPipeName = (optarg ? optarg : "");   break;
         case 'u': APP_CONFIG().m_UdpPort = std::atoi(optarg);   break;
         case 'o': APP_CONFIG().m_OutFileName = (optarg ? optarg : ""); break;
 
