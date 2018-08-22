@@ -164,15 +164,8 @@ void EpollService::Register(actor_ptr_t actor)
 //-----------------------------------------------------------------------------
 void EpollService::StopAll()
 {
-    for( auto [unused, actor]: m_Actors ) {
-        try {
-            // assert(actor.get() != nullptr);
-            if(actor.get() != nullptr)
-                actor->Stop();
-            (void)(unused);
-        }
-        catch(std::exception&) {}
-    }
+    std::lock_guard<std::mutex> lock(m_MapMutex);
+    m_Actors.clear();
 }
 
 } // namespace io
