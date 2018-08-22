@@ -58,6 +58,9 @@ void ActorNamedPipeReader::ReadyRead()
                 << "/" << m_ << " lines. "
                 << m_Cutter.Partials() << " partials. "
                 << " Total bytes: " << total_  << std::endl;
+
+            Service().CreateActor<ActorNamedPipeReader>(m_PipeName);
+
             throw std::system_error(std::make_error_code(std::io_errc::stream), "eof");
         }
 
