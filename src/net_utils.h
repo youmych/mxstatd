@@ -46,7 +46,7 @@ std::error_code make_error_code(linux::netdb::ServentError);
 
 bool isvalidsock(int sockfd);
 
-void set_nonblocking(int fd);
+int set_nonblocking(int fd);
 
 void set_address(const char* hostName, const char* serviceName,
     struct sockaddr_in* sa, const char* protocol);

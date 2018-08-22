@@ -30,7 +30,7 @@ SocketCloser::~SocketCloser() {
 }
 
 //------------------------------------------------------------------------------
-void set_nonblocking(int sockfd)
+int set_nonblocking(int sockfd)
 {
     int nonblocking = 1;
 
@@ -41,6 +41,8 @@ void set_nonblocking(int sockfd)
     flags |= O_NONBLOCK;
     if( 0 != fcntl(sockfd, F_SETFL, flags, nonblocking) )
         throw mxstatd::system_error(errno, "fcntl(F_SETFL)");
+
+    return sockfd;
 }
 //------------------------------------------------------------------------------
 void set_address(const char* hostName, const char* serviceName,
