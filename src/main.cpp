@@ -17,6 +17,7 @@
 
 #include <actor_tcp_listener.h>
 #include <actor_named_pipe_reader.h>
+#include <actor_udp_server.h>
 
 // функция обработки сигналов
 static void signal_handler(int sig)
@@ -69,8 +70,9 @@ int main(int argc, char** argv)
             std::ifstream file(path.c_str());
 
             std::string s;
+            size_t total_ = 0;
             while( std::getline(file, s) ) {
-
+                total_++;
                 auto ev = LineParser::Parse(s);
                 if( !ev ) {
                     std::cout << s << "\n";
@@ -82,6 +84,7 @@ int main(int argc, char** argv)
                 }
                 // work with event
             }
+            std::cout << "Count of lines is " << total_ << std::endl;
         };
 
         // блокируем сигналы, которые будем ждать для завершения программы
@@ -97,6 +100,7 @@ int main(int argc, char** argv)
         if( !APP_CONFIG().InputPipeName().empty() )
             eps.CreateActor<mxstatd::ActorNamedPipeReader>(APP_CONFIG().InputPipeName());
 
+        eps.CreateActor<mxstatd::ActorUdpServer>(APP_CONFIG().OutputUdpPort());
 
         std::future<void> epsFuture = std::async(std::launch::async, std::move(epsCycle));
         std::future<void> fileFuture;
