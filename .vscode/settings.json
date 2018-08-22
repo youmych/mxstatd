@@ -43,6 +43,7 @@
         "functional": "cpp",
         "sstream": "cpp",
         "optional": "cpp",
-        "cerrno": "cpp"
+        "cerrno": "cpp",
+        "numeric": "cpp"
     }
 }

@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/mxstatd",
-            "args": [ "-o", "-", "-u9000" ],
+            "args": [ "-o", "-", "-u9000", "--pipe", "/tmp/mxstatd.pipe", "--socket", "55550" ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
