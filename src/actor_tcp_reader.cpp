@@ -19,7 +19,7 @@ ActorTcpReader::ActorTcpReader(linux::io::EpollService& service, int sockfg)
 void ActorTcpReader::ReadyRead()
 {
     ssize_t rc = 0;
-    char buf[1024*64];
+    char buf[40*1024];
     // мы выставляли флаг EPOLLET, значит очередное событие вернется только
     // когда в сокет придут *новые* данные. Поэтому вычитываем всё.
     for(;;) {
@@ -33,9 +33,9 @@ void ActorTcpReader::ReadyRead()
             throw mxstatd::system_error(errno, "ActorTcpReader.ReadyRead.recv");
         }
         if( rc == 0 ) { // eof
+            // аккуратное разымкание соединения
+            shutdown(NativeHandler(), SHUT_RDWR);
             throw std::system_error(std::make_error_code(std::io_errc::stream), "eof");
-            // mReadRequest = ReadRequest();
-            break;
         }
 
         // std::copy(buf, buf+rc, std::ostream_iterator<char>(std::cout));
