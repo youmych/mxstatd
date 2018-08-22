@@ -33,14 +33,20 @@ void ActorTcpReader::ReadyRead()
             throw mxstatd::system_error(errno, "ActorTcpReader.ReadyRead.recv");
         }
         if( rc == 0 ) { // eof
+            std::cout << "EOF. Readed " << n_ << "/" << m_Cutter.LineCount()
+                << "/" << m_ << " lines. "
+                << m_Cutter.Partials() << " partials. "
+                << " Total bytes: " << total_  << std::endl;
             // аккуратное разымкание соединения
             shutdown(NativeHandler(), SHUT_RDWR);
             throw std::system_error(std::make_error_code(std::io_errc::stream), "eof");
         }
 
-        // std::copy(buf, buf+rc, std::ostream_iterator<char>(std::cout));
-        size_t summ = std::accumulate(buf, buf+rc, size_t(0));
-        std::cout << "s:summ of " << rc << " items = " << summ << std::endl;
+        total_ += rc;
+        n_ += std::count_if(buf, buf+rc, [](char c){ return c =='\n';} );
+        m_Cutter(std::string_view(buf, rc), [this](auto){
+                ++m_;
+        });
     }
 }
 

@@ -1,8 +1,10 @@
 #include <actor_named_pipe_reader.h>
 #include <app_exceptions.h>
+#include <epoll_service.h>
 
 #include <iostream>
 #include <numeric>
+#include <algorithm>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -39,11 +41,10 @@ ActorNamedPipeReader::ActorNamedPipeReader(linux::io::EpollService& service,
 void ActorNamedPipeReader::ReadyRead()
 {
     ssize_t rc = 0;
-    char buf[1024*64];
+    char buf[40*1024]; // 40 байт средняя длина строки. Уменьшаем фрагментирование.
     // мы выставляли флаг EPOLLET, значит очередное событие вернется только
     // когда в сокет придут *новые* данные. Поэтому вычитываем всё.
     for(;;) {
-        // rc = recv(NativeHandler(), get_buffer(mReadRequest), get_size(mReadRequest), 0);
         rc = read(NativeHandler(), buf, sizeof(buf));
         if( rc < 0 ) {
             // Сокет асинхронный. Эти коды означают что вычитали все
@@ -53,12 +54,18 @@ void ActorNamedPipeReader::ReadyRead()
             throw mxstatd::system_error(errno, "ActorTcpReader.ReadyRead.recv");
         }
         if( rc == 0 ) { // eof
+            std::cout << "EOF. Readed " << n_ << "/" << m_Cutter.LineCount()
+                << "/" << m_ << " lines. "
+                << m_Cutter.Partials() << " partials. "
+                << " Total bytes: " << total_  << std::endl;
             throw std::system_error(std::make_error_code(std::io_errc::stream), "eof");
         }
 
-        // std::copy(buf, buf+rc, std::ostream_iterator<char>(std::cout));
-        size_t summ = std::accumulate(buf, buf+rc, size_t(0));
-        std::cout << "p:summ of " << rc << " items = " << summ << std::endl;
+        total_ += rc;
+        n_ += std::count_if(buf, buf+rc, [](char c){ return c =='\n';} );
+        m_Cutter(std::string_view(buf, rc), [this](auto){
+            ++m_;
+        });
     }
 }
 //-----------------------------------------------------------------------------
