@@ -1,5 +1,7 @@
 #pragma once
 
+#include <unistd.h>
+
 namespace linux {
 namespace io {
 
@@ -16,7 +18,9 @@ public:
         , m_Fd(fd)
     {}
 
-    virtual ~EpollActor() {}
+    virtual ~EpollActor() {
+        Close();
+    }
 
     bool EventTriggered() const { return is_EventTriggered; }
 
@@ -26,6 +30,14 @@ public:
     int NativeHandler() const { return m_Fd; }
 
     EpollService& Service() { return m_Service; }
+
+protected:
+    virtual void Close() {
+        if( m_Fd != -1 ) {
+            close(m_Fd);
+            m_Fd = -1;
+        }
+    }
 };
 
 } // namespace io
