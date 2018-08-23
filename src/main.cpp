@@ -19,6 +19,8 @@
 #include <actor_named_pipe_reader.h>
 #include <actor_udp_server.h>
 
+#include <statistics.h>
+
 // функция обработки сигналов
 static void signal_handler(int sig)
 {
@@ -68,6 +70,7 @@ int main(int argc, char** argv)
         auto fileCycle = [&](auto path) {
             std::cout << "Input file: " << path << std::endl;
             std::ifstream file(path.c_str());
+            Statistics stat;
 
             std::string s;
             size_t total_ = 0;
@@ -83,8 +86,10 @@ int main(int argc, char** argv)
                     continue;
                 }
                 // work with event
+                stat.AppendValue(ev.value().TimeMs);
             }
             std::cout << "Count of lines is " << total_ << std::endl;
+            stat.PrintMaps(std::cout);
         };
 
         // блокируем сигналы, которые будем ждать для завершения программы
