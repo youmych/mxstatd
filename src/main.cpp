@@ -89,7 +89,7 @@ int main(int argc, char** argv)
                 stat.AppendValue(ev.value().TimeMs);
             }
             std::cout << "Count of lines is " << total_ << std::endl;
-            stat.PrintMaps(std::cout);
+            stat.PrintDetailed(std::cout);
         };
 
         // блокируем сигналы, которые будем ждать для завершения программы

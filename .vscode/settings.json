@@ -44,6 +44,7 @@
         "sstream": "cpp",
         "optional": "cpp",
         "cerrno": "cpp",
-        "numeric": "cpp"
+        "numeric": "cpp",
+        "iomanip": "cpp"
     }
 }
