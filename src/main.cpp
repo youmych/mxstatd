@@ -70,7 +70,7 @@ int main(int argc, char** argv)
         auto fileCycle = [&](auto path) {
             std::cout << "Input file: " << path << std::endl;
             std::ifstream file(path.c_str());
-            Statistics stat;
+            Statistics stat("ORDER");
 
             std::string s;
             size_t total_ = 0;

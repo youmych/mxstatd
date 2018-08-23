@@ -31,10 +31,21 @@ class Statistics
         StatItem& operator=(const StatItem&) = default;
     };
 
+    struct StatGeneric {
+        int Min = 0;
+        int Mean = 0;
+        int Less_90 = 0;
+        int Less_99 = 0;
+        int Less_99_9 = 0;
+    };
+
     friend std::ostream& operator<<(std::ostream&, const StatItem&);
+    friend std::ostream& operator<<(std::ostream&, const StatGeneric&);
 
 public:
-    explicit Statistics() {}
+    explicit Statistics(const std::string& eventName)
+        : m_EventName(eventName)
+    {}
 
     counter_t Total() const { return m_Total; }
 
@@ -47,8 +58,10 @@ public:
 
 private:
     void UpdateDetailedCache() const;
+    void UpdateGenericCache() const;
 
 private:
+    std::string m_EventName;
     /// Общее кол-во событий данного типа
     counter_t m_Total = 0;
     /// Частоты вхождения по каждому значению измерений
@@ -57,6 +70,8 @@ private:
     map_t m_ClampedFreqs;
     /// Номер "поколения" данных для которого сгенерирован кеш
     mutable counter_t m_DetailedCaheGeneration = 0;
+    mutable counter_t m_GeneriCacheGeneration = 0;
     /// Кеш статистики
     mutable std::vector<StatItem> m_DetailedStatCache;
+    mutable StatGeneric           m_GenericStatCache;
 };
