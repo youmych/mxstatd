@@ -2,6 +2,8 @@
 
 #include <deque>
 #include <chrono>
+#include <atomic>
+#include <thread>
 
 #include <threadsafe-queue.h>
 #include <data_log_event.h>
@@ -11,8 +13,10 @@ namespace mxstatd
 
 class EventQueue
 {
-    explicit EventQueue() {};
-    ~EventQueue() {};
+    explicit EventQueue();
+    ~EventQueue();
+
+    friend class GaterThread;
 
 public:
     using event_t = Data::Log::Event;
@@ -52,8 +56,17 @@ public:
         return std::make_shared<Collector>( Instance().m_EventQueue );
     }
 
+    void Start();
+    void Stop();
+
+private:
+    void WakeUp();
+    void DataGate();
+
 private:
     queue_t m_EventQueue;
+    std::atomic<bool> is_Done { false };
+    std::thread m_GatherThread;
 };
 
 } // mxstatd

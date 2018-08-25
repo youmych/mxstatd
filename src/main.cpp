@@ -19,7 +19,9 @@
 #include <actor_named_pipe_reader.h>
 #include <actor_udp_server.h>
 
+#include <event_queue.h>
 #include <statistics.h>
+#include <stat_map.h>
 
 // функция обработки сигналов
 static void signal_handler(int sig)
@@ -67,29 +69,30 @@ int main(int argc, char** argv)
             }
         };
         // цикл чтения из файла
+        std::atomic<bool> fileThreadDone { false };
         auto fileCycle = [&](auto path) {
             std::cout << "Input file: " << path << std::endl;
             std::ifstream file(path.c_str());
-            Statistics stat("ORDER");
+            auto collector = EVENT_QUEUE().MakeCollector();
 
             std::string s;
             size_t total_ = 0;
             while( std::getline(file, s) ) {
+                if( fileThreadDone.load() )
+                    break;
                 total_++;
                 auto ev = LineParser::Parse(s);
                 if( !ev ) {
-                    std::cout << s << "\n";
                     continue;
                 }
                 if( ev.value().Type == Data::Log::EventType::UNKNOWN ) {
-                    std::cout << s << "\n";
                     continue;
                 }
                 // work with event
-                stat.AppendValue(ev.value().TimeMs);
+                collector->AppendEvent(ev.value());
+                std::this_thread::sleep_for(std::chrono::microseconds(100));
             }
-            std::cout << "Count of lines is " << total_ << std::endl;
-            stat.PrintDetailed(std::cout);
+            std::cout << "End of file " << path << ". Processed " << total_ << " lines." << std::endl;
         };
 
         // блокируем сигналы, которые будем ждать для завершения программы
@@ -99,6 +102,8 @@ int main(int argc, char** argv)
         sigaddset(&sigset, SIGINT);
         sigaddset(&sigset, SIGQUIT);
         sigprocmask(SIG_BLOCK, &sigset, nullptr);
+
+        EVENT_QUEUE().Start();
 
         if( APP_CONFIG().InputTcpPort() != 0 )
             eps.CreateActor<mxstatd::ActorTcpListener>(APP_CONFIG().InputTcpPort());
@@ -131,7 +136,7 @@ int main(int argc, char** argv)
 
         // отправка сигналов о необходимости остановки
         eps.Stop();
-        std::cout << "eps.Stop()" << std::endl;
+        fileThreadDone.store(true);
         // завершение работы потоков
         if( fileFuture.valid() ) {
             fileFuture.wait();
