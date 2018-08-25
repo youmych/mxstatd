@@ -11,11 +11,8 @@ namespace mxstatd
 
 class EventQueue
 {
-    explicit EventQueue();
-    ~EventQueue();
-
-    // чтобы статистика могла забираться из очереди
-    friend class Statistics;
+    explicit EventQueue() {};
+    ~EventQueue() {};
 
 public:
     using event_t = Data::Log::Event;
@@ -50,8 +47,6 @@ public:
 
     EventQueue(EventQueue &&) = delete;
     EventQueue(const EventQueue &) = delete;
-    EventQueue &operator=(EventQueue &&) = delete;
-    EventQueue &operator=(const EventQueue &) = delete;
 
     static std::shared_ptr<Collector> MakeCollector() {
         return std::make_shared<Collector>( Instance().m_EventQueue );
@@ -62,3 +57,7 @@ private:
 };
 
 } // mxstatd
+
+inline mxstatd::EventQueue& EVENT_QUEUE() {
+    return mxstatd::EventQueue::Instance();
+}
