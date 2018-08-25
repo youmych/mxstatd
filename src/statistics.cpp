@@ -22,6 +22,12 @@ std::ostream& operator<<(std::ostream& os, const Statistics::StatGeneric& stat)
 //-----------------------------------------------------------------------------
 void Statistics::AppendValue(int ms)
 {
+    std::lock_guard lock(m_DataAccessMutex);
+    DoAppendValue(ms);
+}
+//-----------------------------------------------------------------------------
+void Statistics::DoAppendValue(int ms)
+{
     static auto constexpr clampedBy = [](auto d) {
         return [=](auto v) constexpr {
             return (v - v % d);
@@ -46,19 +52,19 @@ void Statistics::AppendValue(int ms)
 //-----------------------------------------------------------------------------
 std::ostream& Statistics::PrintGeneric(std::ostream& os) const
 {
-    std::vector<StatItem> newStat;
-    newStat.reserve(m_Freqs.size());
+    // std::vector<StatItem> newStat;
+    // newStat.reserve(m_Freqs.size());
 
-    counter_t partSum = 0;
-    for(const auto& [evTime, evCount]: m_Freqs) {
-        partSum += evCount;
-        newStat.emplace_back(evTime, evCount,
-            (static_cast<double>(evCount) / m_Total) * 100.0,
-            (static_cast<double>(partSum) / m_Total) * 100.0);
-    }
-    os << "Full stat:\nTIME\tTRANSNO\tWEIGHT\tPERCENT\n";
-    std::copy(std::begin(newStat), std::end(newStat),
-        std::ostream_iterator<Statistics::StatItem>(os, "\n"));
+    // counter_t partSum = 0;
+    // for(const auto& [evTime, evCount]: m_Freqs) {
+    //     partSum += evCount;
+    //     newStat.emplace_back(evTime, evCount,
+    //         (static_cast<double>(evCount) / m_Total) * 100.0,
+    //         (static_cast<double>(partSum) / m_Total) * 100.0);
+    // }
+    // os << "Full stat:\nTIME\tTRANSNO\tWEIGHT\tPERCENT\n";
+    // std::copy(std::begin(newStat), std::end(newStat),
+    //     std::ostream_iterator<Statistics::StatItem>(os, "\n"));
 
     if( m_GeneriCacheGeneration != m_Total ) {
         UpdateGenericCache();
