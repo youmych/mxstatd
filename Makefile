@@ -36,7 +36,8 @@ CXXSOURCES= ./src/main.cpp \
 	./src/actor_named_pipe_reader.cpp \
 	./src/actor_udp_server.cpp \
 	./src/event_queue.cpp \
-	./src/statistics.cpp
+	./src/statistics.cpp \
+	./src/stat_map.cpp
 
 OBJS=$(subst .cpp,.o,$(CXXSOURCES))
 
