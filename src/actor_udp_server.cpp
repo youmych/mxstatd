@@ -2,8 +2,12 @@
 #include <epoll_service.h>
 #include <net_utils.h>
 #include <app_exceptions.h>
+#include <statistics.h>
+#include <stat_map.h>
+#include <data_log_event.h>
 
 #include <iostream>
+#include <sstream>
 #include <cstring>
 
 namespace mxstatd
@@ -37,7 +41,20 @@ void ActorUdpServer::ReadyRead()
                 break;
             mxstatd::system_error(errno, "UdpServer.recvfrom");
         }
-        rc = sendto(NativeHandler(), buf, rc, 0, (struct sockaddr*)&peer, peerlen);
+
+        // для простоты будем обрабатывать только начало буфера.
+        auto stat = STAT().GetStatistics( Data::Log::Event::from_string(buf, rc) );
+
+        std::stringstream msgbuf;
+        if( stat ) {
+            stat->PrintGeneric(msgbuf);
+        }
+        else {
+            msgbuf << "UNKNOWN EVENT TYPE";
+        }
+
+        auto msg = msgbuf.str();
+        rc = sendto(NativeHandler(), msg.c_str(), msg.length(), 0, (struct sockaddr*)&peer, peerlen);
         if( rc < 0 ) {
             mxstatd::system_error(errno, "UdpServer.sendto");
         }
