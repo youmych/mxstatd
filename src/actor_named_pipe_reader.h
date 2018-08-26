@@ -2,6 +2,7 @@
 #include <epoll_actor.h>
 #include <string>
 #include <buffer_cutter.h>
+#include <event_queue.h>
 
 namespace mxstatd {
 
@@ -9,8 +10,7 @@ class ActorNamedPipeReader : public linux::io::EpollActor
 {
     std::string m_PipeName;
     BufferCutter m_Cutter;
-    size_t n_ = 0;
-    size_t m_ = 0;
+    std::shared_ptr<EventQueue::Collector> m_Collector;
     size_t total_ = 0;
 public:
     explicit ActorNamedPipeReader(linux::io::EpollService& service,

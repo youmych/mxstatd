@@ -2,6 +2,7 @@
 #include <epoll_service.h>
 #include <net_utils.h>
 #include <app_exceptions.h>
+#include <line_parser.h>
 
 #include <iostream>
 #include <iterator>
@@ -13,6 +14,7 @@ namespace mxstatd
 
 ActorTcpReader::ActorTcpReader(linux::io::EpollService& service, int sockfg)
     : linux::io::EpollActor(service, sockfg, true)
+    , m_Collector( EVENT_QUEUE().MakeCollector() )
 {
 }
 
@@ -38,8 +40,13 @@ void ActorTcpReader::ReadyRead()
             throw std::system_error(std::make_error_code(std::io_errc::stream), "eof");
         }
 
-        m_Cutter(std::string_view(buf, rc), [this](auto){
-            ++m_;
+        m_Cutter(std::string_view(buf, rc), [this](auto s){
+            if( s.empty() )
+                return;
+            auto ev = LineParser::Parse(s);
+            if( ev && ev->Type != Data::Log::EventType::UNKNOWN ) {
+                m_Collector->AppendEvent(*ev);
+            }
         });
     }
 }

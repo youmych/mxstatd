@@ -1,6 +1,8 @@
 #include <actor_named_pipe_reader.h>
 #include <app_exceptions.h>
 #include <epoll_service.h>
+#include <line_parser.h>
+#include <event_queue.h>
 
 #include <iostream>
 #include <numeric>
@@ -34,6 +36,7 @@ ActorNamedPipeReader::ActorNamedPipeReader(linux::io::EpollService& service,
     const std::string& pipeName)
     : linux::io::EpollActor(service, create_and_open_named_pipe(pipeName), true)
     , m_PipeName(pipeName)
+    , m_Collector( EVENT_QUEUE().MakeCollector() )
 {
 
 }
@@ -65,9 +68,13 @@ void ActorNamedPipeReader::ReadyRead()
         }
 
         total_ += rc;
-        n_ += std::count_if(buf, buf+rc, [](char c){ return c =='\n';} );
-        m_Cutter(std::string_view(buf, rc), [this](auto){
-            ++m_;
+        m_Cutter(std::string_view(buf, rc), [this](auto s){
+            if( s.empty() )
+                return;
+            auto ev = LineParser::Parse(s);
+            if( ev && ev->Type != Data::Log::EventType::UNKNOWN ) {
+                m_Collector->AppendEvent(*ev);
+            }
         });
     }
 }
