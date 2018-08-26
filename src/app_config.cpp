@@ -15,7 +15,7 @@ bool AppConfig::ParseArguments(int argc, char** argv)
         { "socket", required_argument, nullptr, 's' },
         { "pipe",   required_argument, nullptr, 'p' },
         { "udp",    required_argument, nullptr, 'u' },
-        { "outfle", required_argument, nullptr, 'o' },
+        { "outfile",required_argument, nullptr, 'o' },
         { "help",   no_argument,       nullptr, 'h' },
         { nullptr, 0, nullptr, 0 }
     };
@@ -58,7 +58,7 @@ void AppConfig::Usage(const char* appName)
         << "\t-s or --socket number - set tcp port number for input. Default is " << DEFAULT_TCP_PORT << "\n"
         << "\t-p or --pipe path/to/pipe - set path to input pipe.\n"
         << "\t-u or --udp number - set udp port number to listen. Default is " << DEFAULT_UDP_PORT << "\n"
-        << "\t-o or --outfle path/to/file - path to report file. By default print to stdout.\n"
+        << "\t-o or --outfile path/to/file - path to report file. By default print to stdout.\n"
         << "\t-h or --help - show this help."
         << std::endl;
 }
