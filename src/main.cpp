@@ -23,6 +23,7 @@
 #include <statistics.h>
 #include <stat_map.h>
 
+#if 0
 // функция обработки сигналов
 static void signal_handler(int sig)
 {
@@ -34,19 +35,29 @@ static void signal_handler(int sig)
         break;
     }
 }
+#endif
 
 int main(int argc, char** argv)
 {
     try {
         if( !AppConfig::ParseArguments(argc, argv) )
             return 0;
-
+#if 0
         // установим обработчик на SIGUSR1
         struct sigaction sigact;
         sigact.sa_flags = 0;
         sigact.sa_handler = signal_handler;
         sigemptyset(&sigact.sa_mask);
         sigaction(SIGUSR1, &sigact, 0);
+#endif
+        // блокируем сигналы, которые будем ждать для завершения программы
+        sigset_t sigset;
+        sigemptyset(&sigset);
+        sigaddset(&sigset, SIGTERM);
+        sigaddset(&sigset, SIGINT);
+        sigaddset(&sigset, SIGQUIT);
+        sigaddset(&sigset, SIGUSR1);
+        sigprocmask(SIG_BLOCK, &sigset, nullptr);
 
         std::cout << "Input file: " << APP_CONFIG().InputFileName() << std::endl
             << "Input pipe: " << APP_CONFIG().InputPipeName() << std::endl
@@ -90,18 +101,10 @@ int main(int argc, char** argv)
                 }
                 // work with event
                 collector->AppendEvent(ev.value());
-                std::this_thread::sleep_for(std::chrono::microseconds(100));
+                std::this_thread::sleep_for(std::chrono::microseconds(10));
             }
             std::cout << "End of file " << path << ". Processed " << total_ << " lines." << std::endl;
         };
-
-        // блокируем сигналы, которые будем ждать для завершения программы
-        sigset_t sigset;
-        sigemptyset(&sigset);
-        sigaddset(&sigset, SIGTERM);
-        sigaddset(&sigset, SIGINT);
-        sigaddset(&sigset, SIGQUIT);
-        sigprocmask(SIG_BLOCK, &sigset, nullptr);
 
         EVENT_QUEUE().Start();
 
@@ -131,6 +134,16 @@ int main(int argc, char** argv)
             std::cout << "Received signal " << strsignal(siginfo.si_signo)
                 << " (" << siginfo.si_signo  << ")."
                 << std::endl;
+            if( siginfo.si_signo == SIGUSR1 ) {
+                if( !APP_CONFIG().OutputFileName().empty() ) {
+                    std::ofstream outf(APP_CONFIG().OutputFileName().c_str());
+                    if( outf.is_open() )
+                        STAT().GetStatistics(Data::Log::EventType::ORDER)->PrintDetailed(outf);
+                }
+                else
+                    STAT().GetStatistics(Data::Log::EventType::ORDER)->PrintDetailed(std::cout);
+                continue;
+            }
             break;
         }
 
