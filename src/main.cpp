@@ -140,11 +140,10 @@ int main(int argc, char** argv)
                 else
                     STAT().GetStatistics(Data::Log::EventType::ORDER)->PrintDetailed(std::cout);
                 continue;
-
-                std::cout << "Received signal " << strsignal(siginfo.si_signo)
+            }
+            std::cout << "Received signal " << strsignal(siginfo.si_signo)
                 << " (" << siginfo.si_signo  << ")."
                 << std::endl;
-            }
             break;
         }
 
