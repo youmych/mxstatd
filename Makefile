@@ -26,7 +26,18 @@ endif
 
 EXECUTABLE=bin/mxstatd
 
-CXXSOURCES= ./src/main.cpp
+CXXSOURCES= ./src/main.cpp \
+	./src/app_config.cpp \
+	./src/epoll_actor_proxy.cpp \
+	./src/epoll_service.cpp \
+	./src/net_utils.cpp \
+	./src/actor_tcp_listener.cpp \
+	./src/actor_tcp_reader.cpp \
+	./src/actor_named_pipe_reader.cpp \
+	./src/actor_udp_server.cpp \
+	./src/event_queue.cpp \
+	./src/statistics.cpp \
+	./src/stat_map.cpp
 
 OBJS=$(subst .cpp,.o,$(CXXSOURCES))
 
