@@ -53,7 +53,7 @@ void Statistics::DoAppendValue(int ms)
 std::ostream& Statistics::PrintGeneric(std::ostream& os)
 {
     // отладка
-#if !defined(NDEBUG)
+#if 0 && !defined(NDEBUG)
     std::unique_lock<std::shared_mutex> lock0(m_DataAccessMutex);
     std::vector<StatItem> newStat;
     newStat.reserve(m_Freqs.size());
