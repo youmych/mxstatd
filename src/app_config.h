@@ -6,7 +6,7 @@ class AppConfig {
     explicit AppConfig() {}
     ~AppConfig() {}
 public:
-    static constexpr uint16_t DEFAULT_TCP_PORT = 9900;
+    static constexpr uint16_t DEFAULT_TCP_PORT = 0;
     static constexpr uint16_t DEFAULT_UDP_PORT = 9000;
 
     AppConfig(AppConfig const&) = delete;
