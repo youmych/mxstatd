@@ -45,6 +45,7 @@
         "optional": "cpp",
         "cerrno": "cpp",
         "numeric": "cpp",
-        "iomanip": "cpp"
+        "iomanip": "cpp",
+        "shared_mutex": "cpp"
     }
 }

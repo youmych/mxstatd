@@ -2,13 +2,13 @@
 #include <string>
 #include <string_view>
 
-class LineCutter
+class BufferCutter
 {
     std::string m_Buffer;
     size_t m_LineCount = 0;
     size_t m_Partials = 0;
 public:
-    explicit LineCutter() {};
+    explicit BufferCutter() {};
 
     size_t LineCount() const { return m_LineCount; }
     size_t Partials() const { return m_Partials; }

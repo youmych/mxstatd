@@ -54,8 +54,8 @@ void ActorNamedPipeReader::ReadyRead()
             throw mxstatd::system_error(errno, "ActorTcpReader.ReadyRead.recv");
         }
         if( rc == 0 ) { // eof
-            std::cout << "EOF. Readed " << n_ << "/" << m_Cutter.LineCount()
-                << "/" << m_ << " lines. "
+            std::cout << "EOF. Readed " << m_Cutter.LineCount()
+                << " lines, "
                 << m_Cutter.Partials() << " partials. "
                 << " Total bytes: " << total_  << std::endl;
 

@@ -1,14 +1,14 @@
 #pragma once
 #include <epoll_actor.h>
 #include <string>
-#include <line_cutter.h>
+#include <buffer_cutter.h>
 
 namespace mxstatd {
 
 class ActorNamedPipeReader : public linux::io::EpollActor
 {
     std::string m_PipeName;
-    LineCutter m_Cutter;
+    BufferCutter m_Cutter;
     size_t n_ = 0;
     size_t m_ = 0;
     size_t total_ = 0;
