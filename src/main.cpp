@@ -39,6 +39,7 @@ static void signal_handler(int sig)
 
 int main(int argc, char** argv)
 {
+    std::cout.sync_with_stdio(false);
     try {
         if( !AppConfig::ParseArguments(argc, argv) )
             return 0;
@@ -58,12 +59,6 @@ int main(int argc, char** argv)
         sigaddset(&sigset, SIGQUIT);
         sigaddset(&sigset, SIGUSR1);
         sigprocmask(SIG_BLOCK, &sigset, nullptr);
-
-        // std::cout << "Input file: " << APP_CONFIG().InputFileName() << std::endl
-        //     << "Input pipe: " << APP_CONFIG().InputPipeName() << std::endl
-        //     << "Input TCP port: " << APP_CONFIG().InputTcpPort() << std::endl
-        //     << "Listen UPD port: " << APP_CONFIG().OutputUdpPort() << std::endl
-        //     << "Output file: " << APP_CONFIG().OutputFileName() << std::endl;
 
         std::cout << "My pid is: " << getpid() << std::endl;
 
@@ -145,11 +140,10 @@ int main(int argc, char** argv)
                 else
                     STAT().GetStatistics(Data::Log::EventType::ORDER)->PrintDetailed(std::cout);
                 continue;
-
-                std::cout << "Received signal " << strsignal(siginfo.si_signo)
+            }
+            std::cout << "Received signal " << strsignal(siginfo.si_signo)
                 << " (" << siginfo.si_signo  << ")."
                 << std::endl;
-            }
             break;
         }
 
