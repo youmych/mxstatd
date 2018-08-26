@@ -21,8 +21,17 @@ static int
 create_and_open_named_pipe(const std::string& pipeName)
 {
     int rc = mkfifo(pipeName.c_str(), 00666); // !Octal number!
-    if( (rc < 0) && (EEXIST != errno) ) {
-        throw mxstatd::system_error(errno, "create_and_open_named_pipe.mkfifo");
+    if(rc < 0)  {
+        if( EEXIST == errno ) {
+            struct stat sb;
+            if( 0 != stat(pipeName.c_str(), &sb) )
+                throw mxstatd::system_error(errno, "create_and_open_named_pipe.stat");
+            if( !S_ISFIFO(sb.st_mode) )
+                throw mxstatd::system_error(EEXIST, pipeName + " is not a pipe");
+            // else OK
+        }
+        else
+            throw mxstatd::system_error(errno, "create_and_open_named_pipe.mkfifo");
     }
 
     rc = open(pipeName.c_str(), O_RDONLY | O_NONBLOCK);
