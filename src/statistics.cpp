@@ -50,42 +50,51 @@ void Statistics::DoAppendValue(int ms)
     m_Total++;
 }
 //-----------------------------------------------------------------------------
-std::ostream& Statistics::PrintGeneric(std::ostream& os) const
+std::ostream& Statistics::PrintGeneric(std::ostream& os)
 {
-    // std::vector<StatItem> newStat;
-    // newStat.reserve(m_Freqs.size());
+    // отладка
+#if !defined(NDEBUG)
+    std::unique_lock<std::shared_mutex> lock0(m_DataAccessMutex);
+    std::vector<StatItem> newStat;
+    newStat.reserve(m_Freqs.size());
 
-    // counter_t partSum = 0;
-    // for(const auto& [evTime, evCount]: m_Freqs) {
-    //     partSum += evCount;
-    //     newStat.emplace_back(evTime, evCount,
-    //         (static_cast<double>(evCount) / m_Total) * 100.0,
-    //         (static_cast<double>(partSum) / m_Total) * 100.0);
-    // }
-    // os << "Full stat:\nTIME\tTRANSNO\tWEIGHT\tPERCENT\n";
-    // std::copy(std::begin(newStat), std::end(newStat),
-    //     std::ostream_iterator<Statistics::StatItem>(os, "\n"));
-
-    if( m_GeneriCacheGeneration != m_Total ) {
-        UpdateGenericCache();
+    counter_t partSum = 0;
+    for(const auto& [evTime, evCount]: m_Freqs) {
+        partSum += evCount;
+        newStat.emplace_back(evTime, evCount,
+            (static_cast<double>(evCount) / m_Total) * 100.0,
+            (static_cast<double>(partSum) / m_Total) * 100.0);
     }
-    return os << m_EventName << " " << m_GenericStatCache << std::endl;
+    os << "Full stat:\nTIME\tTRANSNO\tWEIGHT\tPERCENT\n";
+    std::copy(std::begin(newStat), std::end(newStat),
+        std::ostream_iterator<Statistics::StatItem>(os, "\n"));
+    lock0.unlock();
+#endif
+
+    UpdateGenericCache();
+
+    os << m_EventName << " ";
+    std::shared_lock<std::shared_mutex> lock(m_DataAccessMutex);
+    os << m_GenericStatCache;
+    lock.unlock();
+    return os << std::endl;
 }
 //-----------------------------------------------------------------------------
-std::ostream& Statistics::PrintDetailed(std::ostream& os) const
+std::ostream& Statistics::PrintDetailed(std::ostream& os)
 {
     PrintGeneric(os);
 
-    if( m_DetailedCaheGeneration != m_Total ) {
-        UpdateDetailedCache();
-    }
+    UpdateDetailedCache();
+
     os << "\nTIME\tTRANSNO\tWEIGHT\tPERCENT\n";
+    std::shared_lock<std::shared_mutex> lock(m_DataAccessMutex);
     std::copy(std::begin(m_DetailedStatCache), std::end(m_DetailedStatCache),
         std::ostream_iterator<Statistics::StatItem>(os, "\n"));
+    lock.unlock();
     return os;
 }
 //-----------------------------------------------------------------------------
-std::ostream& Statistics::PrintMaps(std::ostream& os) const
+std::ostream& Statistics::PrintMaps(std::ostream& os)
 {
     for(auto& [key, value]: m_Freqs) {
         os << std::setw(4) << key << "\t" << std::setw(4) << value << "\n";
@@ -101,9 +110,11 @@ std::ostream& Statistics::PrintMaps(std::ostream& os) const
     return os;
 }
 //-----------------------------------------------------------------------------
-void Statistics::UpdateDetailedCache() const
+void Statistics::UpdateDetailedCache()
 {
-    if( 0 == m_Total )
+    std::lock_guard<std::shared_mutex> lock(m_DataAccessMutex);
+
+    if( 0 == m_Total || m_DetailedCaheGeneration == m_Total )
         return;
 
     std::vector<StatItem> newStat;
@@ -121,9 +132,10 @@ void Statistics::UpdateDetailedCache() const
     m_DetailedCaheGeneration = m_Total;
 }
 //-----------------------------------------------------------------------------
-void Statistics::UpdateGenericCache() const
+void Statistics::UpdateGenericCache()
 {
-    if( 0 == m_Total )
+    std::lock_guard<std::shared_mutex> lock(m_DataAccessMutex);
+    if( 0 == m_Total || m_DetailedCaheGeneration == m_Total )
         return;
 
     auto n50 = m_Total * 0.5;

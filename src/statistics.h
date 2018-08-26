@@ -8,6 +8,7 @@
 #include <vector>
 #include <algorithm>
 #include <mutex>
+#include <shared_mutex>
 
 class Statistics
 {
@@ -50,7 +51,7 @@ public:
     {}
 
     counter_t Total() const {
-        std::lock_guard<std::mutex> lock(m_DataAccessMutex);
+        std::shared_lock<std::shared_mutex> lock(m_DataAccessMutex);
         return m_Total;
     }
 
@@ -58,7 +59,7 @@ public:
 
     template <class Iterator, class Adaptor>
     void AppendValues(Iterator begin, Iterator end, Adaptor adaptor) {
-        std::lock_guard<std::mutex> lock(m_DataAccessMutex);
+        std::lock_guard<std::shared_mutex> lock(m_DataAccessMutex);
         std::for_each(begin, end, [&,this](auto v){
             DoAppendValue(adaptor(v));
         });
@@ -66,7 +67,7 @@ public:
 
     template <class Iterator>
     void AppendValues(Iterator begin, Iterator end) {
-        std::lock_guard<std::mutex> lock(m_DataAccessMutex);
+        std::lock_guard<std::shared_mutex> lock(m_DataAccessMutex);
         std::for_each(begin, end, [this](auto v){
             DoAppendValue(v);
         });
@@ -74,20 +75,20 @@ public:
 
     template <class Container, class Adaptor>
     void AppendValues(const Container& c, Adaptor adapt) {
-        std::lock_guard<std::mutex> lock(m_DataAccessMutex);
+        std::lock_guard<std::shared_mutex> lock(m_DataAccessMutex);
         std::for_each(std::begin(c), std::end(c), [&,this](auto v){
             DoAppendValue(adapt(v));
         });
     }
 
-    std::ostream& PrintGeneric(std::ostream& os) const;
-    std::ostream& PrintDetailed(std::ostream& os) const;
+    std::ostream& PrintGeneric(std::ostream& os);
+    std::ostream& PrintDetailed(std::ostream& os);
 
-    std::ostream& PrintMaps(std::ostream& os) const;
+    std::ostream& PrintMaps(std::ostream& os);
 
 private:
-    void UpdateDetailedCache() const;
-    void UpdateGenericCache() const;
+    void UpdateDetailedCache();
+    void UpdateGenericCache();
     void DoAppendValue(int ms);
 
 private:
@@ -99,12 +100,11 @@ private:
     /// Частоты вхожения по 5-мс диапазонам [x, x+5)
     map_t m_ClampedFreqs;
     /// Номер "поколения" данных для которого сгенерирован кеш
-    mutable counter_t m_DetailedCaheGeneration = 0;
-    mutable counter_t m_GeneriCacheGeneration = 0;
+    counter_t m_DetailedCaheGeneration = 0;
+    counter_t m_GeneriCacheGeneration = 0;
     /// Кеш статистики
-    mutable std::vector<StatItem> m_DetailedStatCache;
-    mutable StatGeneric           m_GenericStatCache;
+    std::vector<StatItem> m_DetailedStatCache;
+    StatGeneric           m_GenericStatCache;
 
-    mutable std::mutex m_DataAccessMutex;
-    mutable std::mutex m_CacheAccessMutex;
+    mutable std::shared_mutex m_DataAccessMutex;
 };
