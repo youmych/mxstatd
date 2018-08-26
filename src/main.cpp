@@ -131,18 +131,24 @@ int main(int argc, char** argv)
                 std::cout << "sigwaitinfo(): " << strerror(errno) << std::endl;
                 break;
             }
-            std::cout << "Received signal " << strsignal(siginfo.si_signo)
-                << " (" << siginfo.si_signo  << ")."
-                << std::endl;
+
             if( siginfo.si_signo == SIGUSR1 ) {
                 if( !APP_CONFIG().OutputFileName().empty() ) {
                     std::ofstream outf(APP_CONFIG().OutputFileName().c_str());
                     if( outf.is_open() )
                         STAT().GetStatistics(Data::Log::EventType::ORDER)->PrintDetailed(outf);
+                    else {
+                        std::cout << "Can't open file " << APP_CONFIG().OutputFileName()
+                            << ": " << strerror(errno) << std::endl;
+                    }
                 }
                 else
                     STAT().GetStatistics(Data::Log::EventType::ORDER)->PrintDetailed(std::cout);
                 continue;
+
+                std::cout << "Received signal " << strsignal(siginfo.si_signo)
+                << " (" << siginfo.si_signo  << ")."
+                << std::endl;
             }
             break;
         }
