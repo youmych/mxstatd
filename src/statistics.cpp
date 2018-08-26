@@ -52,6 +52,19 @@ void Statistics::DoAppendValue(int ms)
 //-----------------------------------------------------------------------------
 std::ostream& Statistics::PrintGeneric(std::ostream& os)
 {
+    UpdateGenericCache();
+
+    os << m_EventName << " ";
+    std::shared_lock<std::shared_mutex> lock(m_DataAccessMutex);
+    os << m_GenericStatCache;
+    lock.unlock();
+    return os << std::endl;
+}
+//-----------------------------------------------------------------------------
+std::ostream& Statistics::PrintDetailed(std::ostream& os)
+{
+    PrintGeneric(os);
+
     // отладка
 #if 0 && !defined(NDEBUG)
     std::unique_lock<std::shared_mutex> lock0(m_DataAccessMutex);
@@ -71,19 +84,6 @@ std::ostream& Statistics::PrintGeneric(std::ostream& os)
     lock0.unlock();
 #endif
 
-    UpdateGenericCache();
-
-    os << m_EventName << " ";
-    std::shared_lock<std::shared_mutex> lock(m_DataAccessMutex);
-    os << m_GenericStatCache;
-    lock.unlock();
-    return os << std::endl;
-}
-//-----------------------------------------------------------------------------
-std::ostream& Statistics::PrintDetailed(std::ostream& os)
-{
-    PrintGeneric(os);
-
     UpdateDetailedCache();
 
     os << "\nTIME\tTRANSNO\tWEIGHT\tPERCENT\n";
@@ -91,7 +91,7 @@ std::ostream& Statistics::PrintDetailed(std::ostream& os)
     std::copy(std::begin(m_DetailedStatCache), std::end(m_DetailedStatCache),
         std::ostream_iterator<Statistics::StatItem>(os, "\n"));
     lock.unlock();
-    return os;
+    return os << std::endl;
 }
 //-----------------------------------------------------------------------------
 std::ostream& Statistics::PrintMaps(std::ostream& os)
@@ -138,43 +138,38 @@ void Statistics::UpdateGenericCache()
     if( 0 == m_Total || m_DetailedCaheGeneration == m_Total )
         return;
 
-    auto n50 = m_Total * 0.5;
-    auto n90 = m_Total * 0.9;
-    auto n99 = m_Total * 0.99;
-    auto n99_9 = m_Total * 0.999;
+    auto N50 = m_Total * 0.5;
+    auto N90 = m_Total * 0.9;
+    auto N99 = m_Total * 0.99;
+    auto N99_9 = m_Total * 0.999;
+
+    counter_t partSum = 0;
+    auto less_n = [&](auto N) constexpr {
+        return [&,N](auto& it) {
+            // текущий элемент найден если вместе с ним частичная сумма достаточна.
+            // Но его не добавляем т.к. добавление будет на след. шаге если он потребуется.
+            if( partSum + it.second >= N ) {
+                return true;
+            }
+            partSum += it.second;
+            return false;
+        };
+    };
 
     auto it = m_Freqs.begin();
     m_GenericStatCache.Min = it->first;
 
-    counter_t partSum = 0;
-    for( ; it != m_Freqs.end(); ++it ) {
-        if( n50 <= partSum ) {
-            m_GenericStatCache.Mean = it->first;
-            break;
-        }
-        partSum += it->second;
-    }
-    for( ; it != m_Freqs.end(); ++it ) {
-        if( n90 <= partSum ) {
-            m_GenericStatCache.Less_90 = it->first;
-            break;
-        }
-        partSum += it->second;
-    }
-    for( ; it != m_Freqs.end(); ++it ) {
-        if( n99 <= partSum ) {
-            m_GenericStatCache.Less_99 = it->first;
-            break;
-        }
-        partSum += it->second;
-    }
-    for( ; it != m_Freqs.end(); ++it ) {
-        if( n99_9 <= partSum ) {
-            m_GenericStatCache.Less_99_9 = it->first;
-            break;
-        }
-        partSum += it->second;
-    }
+    it = std::find_if(it, m_Freqs.end(), less_n(N50));
+    m_GenericStatCache.Mean = it->first;
+
+    it = std::find_if(it, m_Freqs.end(), less_n(N90));
+    m_GenericStatCache.Less_90 = it->first;
+
+    it = std::find_if(it, m_Freqs.end(), less_n(N99));
+    m_GenericStatCache.Less_99 = it->first;
+
+    it = std::find_if(it, m_Freqs.end(), less_n(N99_9));
+    m_GenericStatCache.Less_99_9 = it->first;
 
     m_GeneriCacheGeneration = m_Total;
 }
