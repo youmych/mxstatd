@@ -59,11 +59,11 @@ int main(int argc, char** argv)
         sigaddset(&sigset, SIGUSR1);
         sigprocmask(SIG_BLOCK, &sigset, nullptr);
 
-        std::cout << "Input file: " << APP_CONFIG().InputFileName() << std::endl
-            << "Input pipe: " << APP_CONFIG().InputPipeName() << std::endl
-            << "Input TCP port: " << APP_CONFIG().InputTcpPort() << std::endl
-            << "Listen UPD port: " << APP_CONFIG().OutputUdpPort() << std::endl
-            << "Output file: " << APP_CONFIG().OutputFileName() << std::endl;
+        // std::cout << "Input file: " << APP_CONFIG().InputFileName() << std::endl
+        //     << "Input pipe: " << APP_CONFIG().InputPipeName() << std::endl
+        //     << "Input TCP port: " << APP_CONFIG().InputTcpPort() << std::endl
+        //     << "Listen UPD port: " << APP_CONFIG().OutputUdpPort() << std::endl
+        //     << "Output file: " << APP_CONFIG().OutputFileName() << std::endl;
 
         std::cout << "My pid is: " << getpid() << std::endl;
 
@@ -101,7 +101,7 @@ int main(int argc, char** argv)
                 }
                 // work with event
                 collector->AppendEvent(ev.value());
-                std::this_thread::sleep_for(std::chrono::microseconds(10));
+                // std::this_thread::sleep_for(std::chrono::microseconds(10));
             }
             std::cout << "End of file " << path << ". Processed " << total_ << " lines." << std::endl;
         };
